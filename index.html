@@ -9,9 +9,9 @@
 
 <style>
 body{background:#0f1115;color:#e4e4e7;font-family:'Inter',sans-serif}
-.header{height:220px;background:url('\(55\)\ Tumblr.gif') center/cover no-repeat;position:relative}
+.header{height:220px;background:url('cover.gif') center/cover no-repeat;position:relative}
 .overlay{position:absolute;bottom:-40px;left:40px;display:flex;align-items:center}
-.avatar{width:80px;height:80px;border-radius:10px;background:url('_.jpeg') center/cover;border:3px solid #0f1115}
+.avatar{width:80px;height:80px;border-radius:10px;background:url('img.jpeg') center/cover;border:3px solid #0f1115}
 .title{margin-left:20px;font-size:32px;font-weight:600}
 .container-custom{padding:80px 20px}
 .card-kanban{background:#1f2937;border-radius:10px;padding:10px;margin-top:10px}
@@ -154,6 +154,33 @@ function criar(){
  render();
 }
 
+function apagar(index, e){
+ if(e){ e.stopPropagation(); e.preventDefault(); }
+ index = Number(index);
+ if(!Number.isInteger(index)) return;
+ if(confirm('Tens a certeza que queres eliminar esta marcação?')){
+   let m = marcacoes[index];
+   if(m && m.feito){
+     let c = clientes.find(c=>c.nome===m.nome);
+     if(c && c.presencas>0) c.presencas--;
+   }
+   marcacoes.splice(index,1);
+   save();
+   render();
+ }
+}
+ if(confirm('Tens a certeza que queres eliminar esta marcação?')){
+   let m = marcacoes[index];
+   if(m.feito){
+     let c = clientes.find(c=>c.nome===m.nome);
+     if(c && c.presencas>0) c.presencas--;
+   }
+   marcacoes.splice(index,1);
+   save();
+   render();
+ }
+}
+
 function editar(index){
  let m=marcacoes[index];
  document.getElementById('nome').value=m.nome;
@@ -207,9 +234,12 @@ function render(){
       card.innerHTML=`
         <strong>${m.nome}</strong>
         <div class='time'>${m.hora} - ${m.servico}</div>
-        <div class="d-flex justify-content-between mt-2">
+        <div class="d-flex justify-content-between align-items-center mt-2">
           <input type='checkbox' ${m.feito?'checked':''} onchange='toggle(${i},this)'>
-          <button class="btn btn-sm btn-outline-light" onclick='event.stopPropagation(); editar(${i})'>✏️</button>
+          <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm btn-outline-light" onclick='event.stopPropagation(); editar(${i})'>✏️</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick='apagar(${i}, event)'>🗑️</button>
+          </div>
         </div>
       `;
       col.appendChild(card);
