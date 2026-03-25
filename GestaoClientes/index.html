@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Girlies Schedule</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{background:#0f1115;color:#e4e4e7;font-family:'Inter',sans-serif}
+.header{height:220px;background:url('\(55\)\ Tumblr.gif') center/cover no-repeat;position:relative}
+.overlay{position:absolute;bottom:-40px;left:40px;display:flex;align-items:center}
+.avatar{width:80px;height:80px;border-radius:10px;background:url('_.jpeg') center/cover;border:3px solid #0f1115}
+.title{margin-left:20px;font-size:32px;font-weight:600}
+.container-custom{padding:80px 20px}
+.card-kanban{background:#1f2937;border-radius:10px;padding:10px;margin-top:10px}
+.time{font-size:12px;color:#9ca3af}
+.sidebar{background:#111827;padding:15px;border-radius:10px;height:100%}
+.suggestions{background:#1f2937;border-radius:5px;max-height:120px;overflow:auto}
+.suggestions div{padding:5px;cursor:pointer}
+.suggestions div:hover{background:#374151}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="overlay">
+    <div class="avatar"></div>
+    <div class="title">My Girlies Schedule</div>
+  </div>
+</div>
+
+<div class="container-fluid container-custom">
+  <div class="row">
+
+    <div class="col-lg-9">
+      <div class="row" id="board"></div>
+    </div>
+
+    <div class="col-lg-3">
+      <div class="sidebar">
+        <h5>Clientes</h5>
+        <div id="clientesList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button class="btn btn-info position-fixed bottom-0 end-0 m-4" data-bs-toggle="modal" data-bs-target="#modal">+ Nova</button>
+
+<div class="modal fade" id="modal">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header">
+        <h5>Nova / Editar</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input id="nome" class="form-control mb-1" placeholder="Nome" oninput="filtrarClientes()">
+        <div id="listaSugestoes" class="suggestions mb-2"></div>
+        <input id="contacto" class="form-control mb-2" placeholder="Contacto">
+        <input type="time" id="hora" class="form-control mb-2">
+        <select id="servico" class="form-select mb-2">
+          <option>Sobrancelhas</option>
+          <option>Unhas</option>
+          <option>Limpeza de pele</option>
+          <option>Pedicure</option>
+        </select>
+        <select id="dia" class="form-select">
+          <option value="0">Segunda</option>
+          <option value="1">Terça</option>
+          <option value="2">Quarta</option>
+          <option value="3">Quinta</option>
+          <option value="4">Sexta</option>
+          <option value="5">Sábado</option>
+          <option value="6">Domingo</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" onclick="criar()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="bonusModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white text-center p-4">
+      <h3>🎉 Cliente atingiu 10 presenças!</h3>
+      <p>Oferecer sessão gratuita 🎁</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+let marcacoes=JSON.parse(localStorage.getItem('marcacoes'))||[];
+let clientes=JSON.parse(localStorage.getItem('clientes'))||[];
+let editIndex=null;
+
+function save(){
+ localStorage.setItem('marcacoes',JSON.stringify(marcacoes));
+ localStorage.setItem('clientes',JSON.stringify(clientes));
+}
+
+function filtrarClientes(){
+ let input=document.getElementById('nome').value.toLowerCase();
+ let lista=document.getElementById('listaSugestoes');
+ lista.innerHTML='';
+
+ clientes
+ .filter(c=>c.nome.toLowerCase().includes(input))
+ .forEach(c=>{
+   let div=document.createElement('div');
+   div.innerText=c.nome;
+   div.onclick=()=>{
+     document.getElementById('nome').value=c.nome;
+     document.getElementById('contacto').value=c.contacto || '';
+     lista.innerHTML='';
+   };
+   lista.appendChild(div);
+ });
+}
+
+function criar(){
+ let nome=document.getElementById('nome').value.trim();
+ let contacto=document.getElementById('contacto').value;
+ let hora=document.getElementById('hora').value;
+ let servico=document.getElementById('servico').value;
+ let dia=parseInt(document.getElementById('dia').value);
+
+ if(!nome) return;
+
+ let cliente=clientes.find(c=>c.nome.toLowerCase()===nome.toLowerCase());
+ if(!cliente){
+  cliente={nome,contacto,presencas:0};
+  clientes.push(cliente);
+ } else {
+  cliente.contacto = contacto || cliente.contacto;
+ }
+
+ if(editIndex!==null){
+  marcacoes[editIndex]={nome:cliente.nome,contacto,hora,servico,dia,feito:marcacoes[editIndex].feito};
+  editIndex=null;
+ } else {
+  marcacoes.push({nome:cliente.nome,contacto,hora,servico,dia,feito:false});
+ }
+
+ save();
+ bootstrap.Modal.getInstance(document.getElementById('modal')).hide();
+ render();
+}
+
+function editar(index){
+ let m=marcacoes[index];
+ document.getElementById('nome').value=m.nome;
+ document.getElementById('contacto').value=m.contacto;
+ document.getElementById('hora').value=m.hora;
+ document.getElementById('servico').value=m.servico;
+ document.getElementById('dia').value=m.dia;
+ editIndex=index;
+ new bootstrap.Modal(document.getElementById('modal')).show();
+}
+
+function toggle(i,checkbox){
+ let m=marcacoes[i];
+ let c=clientes.find(c=>c.nome===m.nome);
+
+ if(checkbox.checked){
+  m.feito=true;
+  if(c){
+    c.presencas++;
+    if(c.presencas%10===0){
+      new bootstrap.Modal(document.getElementById('bonusModal')).show();
+    }
+  }
+ }else{
+  m.feito=false;
+  if(c && c.presencas>0) c.presencas--;
+ }
+
+ save();
+ render();
+}
+
+function render(){
+ let board=document.getElementById('board');
+ let clientesList=document.getElementById('clientesList');
+
+ board.innerHTML='';
+ clientesList.innerHTML='';
+
+ const dias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+
+ for(let d=0;d<7;d++){
+  let col=document.createElement('div');
+  col.className='col-md-2';
+  col.innerHTML=`<h6>${dias[d]}</h6><hr>`;
+
+  marcacoes.forEach((m,i)=>{
+    if(m.dia===d){
+      let card=document.createElement('div');
+      card.className='card-kanban';
+      card.innerHTML=`
+        <strong>${m.nome}</strong>
+        <div class='time'>${m.hora} - ${m.servico}</div>
+        <div class="d-flex justify-content-between mt-2">
+          <input type='checkbox' ${m.feito?'checked':''} onchange='toggle(${i},this)'>
+          <button class="btn btn-sm btn-outline-light" onclick='event.stopPropagation(); editar(${i})'>✏️</button>
+        </div>
+      `;
+      col.appendChild(card);
+    }
+  });
+
+  board.appendChild(col);
+ }
+
+ clientes.forEach(c=>{
+  let div=document.createElement('div');
+  div.innerHTML=`${c.nome} - ${c.presencas}`;
+  clientesList.appendChild(div);
+ });
+}
+
+render();
+</script>
+
+</body>
+</html>
